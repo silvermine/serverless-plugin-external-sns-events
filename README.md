@@ -15,15 +15,19 @@ source.
 By default, the Serverless [SNS event
 source](https://serverless.com/framework/docs/providers/aws/events/sns/) will
 create a new topic just for that function, but in many cases if you want a
-function to subscribe to a topic, the topic will have already been create,
+function to subscribe to a topic, the topic will have already been created,
 either in the same service or in a different service.
 
 
 ## How do I use it?
 
 Rather than defining an `sns` event for your function, define an `externalSNS`
-event, where the value is either a string, or an object that works with
-CloudFormation to resolve to an ARN.
+event, where the value is a string, the name of the topic that you want to
+subscribe this function to.
+
+NOTE: at this time, it is assumed that the topic is in the same account and
+region as the Lambda function itself. That can be changed in the future if
+needed - feel free to open an issue, and preferably submit a pull request.
 
 ```
 functions:
@@ -31,23 +35,15 @@ functions:
       name: ${self:service}-${self:provider.stage}-doSomething
       handler: src/DoSomething.handler
       events:
-         - externalSNS:
-            'Fn::Join':
-               - 'arn:aws:sns:${self:custom.region}:'
-               - { Ref: 'AWS::AccountId' }
-               - ':some-topic'
+         - externalSNS: 'some-topic-name'
 ```
 
-Or:
+By doing that, the `deploy` and `remove` commands in SLS will now subscribe and
+unsubscribe your function to or from the specified topic. If you would like to
+subscribe or unsubscribe the functions manually (outside of a deploy or remove
+command), you can use `sls subscribeExternalSNS` or
+`sls unsubscribeExternalSNS`.
 
-```
-functions:
-   doSomething:
-      name: ${self:service}-${self:provider.stage}-doSomething
-      handler: src/DoSomething.handler
-      events:
-         - externalSNS: 'arn:aws:sns:us-east-1:1234567890:some-topic'
-```
 
 ## How do I contribute?
 

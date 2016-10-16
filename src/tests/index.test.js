@@ -1,41 +1,11 @@
 'use strict';
 
 var expect = require('expect.js'),
-    sinon = require('sinon'),
     Plugin = require('../index.js');
 
 describe('serverless-plugin-external-sns-events', function() {
 
-   describe('init', function() {
-
-      it('registers the appropriate hook', function() {
-         var plugin = new Plugin();
-
-         expect(plugin.hooks['deploy:compileEvents']).to.be.a('function');
-      });
-
-      it('registers a hook that calls compileEvents', function() {
-         var spy = sinon.spy(),
-             ExtPlugin = Plugin.extend({ compileEvents: spy }),
-             plugin = new ExtPlugin();
-
-         plugin.hooks['deploy:compileEvents']();
-
-         expect(spy.called).to.be.ok();
-         expect(spy.calledOn(plugin));
-      });
-
-   });
-
-
-   describe('compileEvents', function() {
-
-      // TODO: write tests
-
-   });
-
-
-   describe('compileEvent', function() {
+   describe('addEventPermission', function() {
 
       // TODO: write tests
 
@@ -64,26 +34,12 @@ describe('serverless-plugin-external-sns-events', function() {
    });
 
 
-   describe('_normalizeTopicARN', function() {
+   describe('_normalizeTopicName', function() {
       var plugin = new Plugin();
 
       it('produces expected output for a string', function() {
-         expect(plugin._normalizeTopicARN('arn:aws:sns:us-east-1:1234567890:foo-topic')).to
-            .eql('Arnawssnsuseast11234567890footopic');
-      });
-
-      it('produces expected output for a Fn::Join object', function() {
-         var arn;
-
-         arn = {
-            'Fn::Join': [
-               'arn:aws:sns:us-east-1:',
-               { Ref: 'AWS::AccountId' },
-               ':foo-topic',
-            ]
-         };
-
-         expect(plugin._normalizeTopicARN(arn)).to.eql('Arnawssnsuseast1AWSAccountIdfootopic');
+         expect(plugin._normalizeTopicName('foo-topic')).to
+            .eql('Footopic');
       });
 
    });

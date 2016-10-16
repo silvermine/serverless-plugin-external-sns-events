@@ -25,9 +25,11 @@
   "homepage": "https://github.com/silvermine/serverless-plugin-external-sns-events#readme",
   "dependencies": {
     "class.extend": "0.9.2",
+    "q": "1.4.1",
     "underscore": "1.8.3"
   },
   "devDependencies": {
+    "aws-sdk": "2.6.9",
     "coveralls": "2.11.12",
     "eslint": "3.3.1",
     "eslint-config-silvermine": "1.0.0",
