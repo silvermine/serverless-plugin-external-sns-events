@@ -1,0 +1,42 @@
+{
+  "name": "serverless-plugin-external-sns-events",
+  "version": "1.0.0",
+  "description": "Plugin for the SLS 1.x branch to provide better support for SNS events to your Lambda functions",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "grunt standards && ./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha -- -R spec 'src/tests/**/*.test.js'"
+  },
+  "author": "Jeremy Thomerson",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/silvermine/serverless-plugin-external-sns-events.git"
+  },
+  "keywords": [
+    "serverless plugin better sns events",
+    "serverless plugin function subscribe sns",
+    "serverless",
+    "api gateway",
+    "api gateway error responses"
+  ],
+  "bugs": {
+    "url": "https://github.com/silvermine/serverless-plugin-external-sns-events/issues"
+  },
+  "homepage": "https://github.com/silvermine/serverless-plugin-external-sns-events#readme",
+  "dependencies": {
+    "class.extend": "0.9.2",
+    "underscore": "1.8.3"
+  },
+  "devDependencies": {
+    "coveralls": "2.11.12",
+    "eslint": "3.3.1",
+    "eslint-config-silvermine": "1.0.0",
+    "expect.js": "0.3.1",
+    "grunt": "1.0.1",
+    "grunt-eslint": "19.0.0",
+    "istanbul": "0.4.4",
+    "mocha": "3.0.2",
+    "mocha-lcov-reporter": "1.2.0",
+    "sinon": "1.17.5"
+  }
+}
