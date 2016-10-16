@@ -44,6 +44,11 @@ subscribe or unsubscribe the functions manually (outside of a deploy or remove
 command), you can use `sls subscribeExternalSNS` or
 `sls unsubscribeExternalSNS`.
 
+**NOTE:** This plugin requires the AWS SDK (`require('aws-sdk')`), but does not
+list it as a dependency. This allows you to provide the dependency your own
+way, making sure not to bundle the SDK and all its dependencies with your
+function code.
+
 
 ## How do I contribute?
 
