@@ -62,7 +62,8 @@ module.exports = Class.extend({
 
    subscribeFunction: function(fnName, fnDef, topicName) {
       var self = this,
-          sns = new AWS.SNS();
+          sns_region,
+          sns;
 
       if (this._opts.noDeploy) {
          return this._serverless.cli.log(
@@ -77,6 +78,8 @@ module.exports = Class.extend({
             if (info.SubscriptionArn) {
                return self._serverless.cli.log('Function ' + info.FunctionArn + ' is already subscribed to ' + info.TopicArn);
             }
+            sns_region = info.TopicArn.split(':')[3];
+            sns = new AWS.SNS({region: sns_region});
 
             return Q.ninvoke(sns, 'subscribe', { TopicArn: info.TopicArn, Protocol: 'lambda', Endpoint: info.FunctionArn })
                .then(function() {
@@ -87,7 +90,8 @@ module.exports = Class.extend({
 
    unsubscribeFunction: function(fnName, fnDef, topicName) {
       var self = this,
-          sns = new AWS.SNS();
+          sns_region,
+          sns;
 
       this._serverless.cli.log('Need to unsubscribe ' + fnDef.name + ' from ' + topicName);
 
@@ -96,6 +100,8 @@ module.exports = Class.extend({
             if (!info.SubscriptionArn) {
                return self._serverless.cli.log('Function ' + info.FunctionArn + ' is not subscribed to ' + info.TopicArn);
             }
+            sns_region = info.TopicArn.split(':')[3];
+            sns = new AWS.SNS({region: sns_region});
 
             return Q.ninvoke(sns, 'unsubscribe', { SubscriptionArn: info.SubscriptionArn })
                .then(function() {
@@ -109,23 +115,30 @@ module.exports = Class.extend({
 
    _getSubscriptionInfo: function(fnName, fnDef, topicName) {
       var self = this,
-          sns = new AWS.SNS(),
+          sns,
           lambda = new AWS.Lambda(),
           fnArn, acctID, region, topicArn;
 
       return Q.ninvoke(lambda, 'getFunction', { FunctionName: fnDef.name })
          .then(function(fn) {
             fnArn = fn.Configuration.FunctionArn;
-            // NOTE: assumes that the topic is in the same account and region at this point
-            region = fnArn.split(':')[3];
-            acctID = fnArn.split(':')[4];
-            topicArn = 'arn:aws:sns:' + region + ':' + acctID + ':' + topicName;
+            if (topicName.startsWith('arn:aws')) {
+                topicArn = topicName;
+                region = topicArn.split(':')[3];
+                sns = new AWS.SNS({region: region});
+                return Q.ninvoke(sns, 'listSubscriptions');
+            } else {
+                // NOTE: assumes that the topic is in the same account and region at this point
+                region = fnArn.split(':')[3];
+                acctID = fnArn.split(':')[4];
+                topicArn = 'arn:aws:sns:' + region + ':' + acctID + ':' + topicName;
+                self._serverless.cli.log('Function ARN: ' + fnArn);
+                self._serverless.cli.log('Topic ARN: ' + topicArn);
 
-            self._serverless.cli.log('Function ARN: ' + fnArn);
-            self._serverless.cli.log('Topic ARN: ' + topicArn);
-
-            // NOTE: does not support NextToken and paginating through subscriptions at this point
-            return Q.ninvoke(sns, 'listSubscriptionsByTopic', { TopicArn: topicArn });
+                // NOTE: does not support NextToken and paginating through subscriptions at this point
+                sns = new AWS.SNS()
+                return Q.ninvoke(sns, 'listSubscriptionsByTopic', { TopicArn: topicArn });
+            }
          })
          .then(function(resp) {
             var existing = _.findWhere(resp.Subscriptions, { Protocol: 'lambda', Endpoint: fnArn }) || {};
