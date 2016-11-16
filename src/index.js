@@ -62,7 +62,7 @@ module.exports = Class.extend({
 
    subscribeFunction: function(fnName, fnDef, topicName) {
       var self = this,
-          sns = new AWS.SNS();
+          sns = new AWS.SNS({ region: this._serverless.service.defaults.region });
 
       if (this._opts.noDeploy) {
          return this._serverless.cli.log(
@@ -87,7 +87,7 @@ module.exports = Class.extend({
 
    unsubscribeFunction: function(fnName, fnDef, topicName) {
       var self = this,
-          sns = new AWS.SNS();
+          sns = new AWS.SNS({ region: this._serverless.service.defaults.region });
 
       this._serverless.cli.log('Need to unsubscribe ' + fnDef.name + ' from ' + topicName);
 
@@ -109,8 +109,8 @@ module.exports = Class.extend({
 
    _getSubscriptionInfo: function(fnName, fnDef, topicName) {
       var self = this,
-          sns = new AWS.SNS(),
-          lambda = new AWS.Lambda(),
+          sns = new AWS.SNS({ region: this._serverless.service.defaults.region }),
+          lambda = new AWS.Lambda({ region: this._serverless.service.defaults.region }),
           fnArn, acctID, region, topicArn;
 
       return Q.ninvoke(lambda, 'getFunction', { FunctionName: fnDef.name })
