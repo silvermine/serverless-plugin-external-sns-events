@@ -1,14 +1,31 @@
 'use strict';
 
 var expect = require('expect.js'),
-    Plugin = require('../index.js');
+    Plugin = require('../index.js'),
+    Serverless = require('serverless');
 
 describe('serverless-plugin-external-sns-events', function() {
 
    describe('addEventPermission', function() {
+      var plugin, resources, serverless;
 
-      // TODO: write tests
+      serverless = new Serverless();
+      serverless.service.provider.compiledCloudFormationTemplate = {
+         Resources: {},
+      };
 
+      plugin = new Plugin(serverless);
+
+      plugin.addEventPermission('someFunction', undefined, 'someTopic');
+      resources = serverless.service.provider.compiledCloudFormationTemplate.Resources;
+
+      it('populates Serverless compiledCloudFormationTemplate resources with permission SomeFunctionLambdaPermissionSomeTopic', function() {
+         expect(resources).to.only.have.key('SomeFunctionLambdaPermissionSomeTopic');
+      });
+
+      it('populates permission object with SourceArn', function() {
+         expect(resources.SomeFunctionLambdaPermissionSomeTopic.Properties).to.have.key('SourceArn');
+      });
    });
 
 
