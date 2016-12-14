@@ -1,8 +1,6 @@
 'use strict';
 
 var _ = require('underscore'),
-    Q = require('q'),
-    AWS = require('aws-sdk'),
     Class = require('class.extend');
 
 module.exports = Class.extend({
@@ -10,6 +8,7 @@ module.exports = Class.extend({
    init: function(serverless, opts) {
       this._serverless = serverless;
       this._opts = opts;
+      this.provider = serverless ? serverless.getProvider('aws') : null;
 
       this.hooks = {
          'deploy:compileEvents': this._loopEvents.bind(this, this.addEventPermission),
@@ -21,9 +20,11 @@ module.exports = Class.extend({
 
       this.commands = {
          subscribeExternalSNS: {
+            usage: 'Adds subscriptions to any SNS Topics defined by externalSNS.',
             lifecycleEvents: [ 'subscribe' ],
          },
          unsubscribeExternalSNS: {
+            usage: 'Removes subscriptions from any SNS Topics defined by externalSNS.',
             lifecycleEvents: [ 'unsubscribe' ],
          },
       };
@@ -54,6 +55,7 @@ module.exports = Class.extend({
             FunctionName: { 'Fn::GetAtt': [ fnRef, 'Arn' ] },
             Action: 'lambda:InvokeFunction',
             Principal: 'sns.amazonaws.com',
+            SourceArn: { 'Fn::Join': [ ':', [ 'arn:aws:sns', { 'Ref': 'AWS::Region' }, { 'Ref': 'AWS::AccountId' }, topicName ] ] }
          },
       };
 
@@ -61,59 +63,70 @@ module.exports = Class.extend({
    },
 
    subscribeFunction: function(fnName, fnDef, topicName) {
-      var self = this,
-          sns = new AWS.SNS();
+      var self = this;
 
       if (this._opts.noDeploy) {
-         return this._serverless.cli.log(
+         this._serverless.cli.log(
             'Not subscribing ' + fnDef.name + ' to ' + topicName + ' because of the noDeploy flag'
          );
+         return;
       }
 
       this._serverless.cli.log('Need to subscribe ' + fnDef.name + ' to ' + topicName);
 
-      return this._getSubscriptionInfo(fnName, fnDef, topicName)
+      return this._getSubscriptionInfo(fnDef, topicName)
          .then(function(info) {
-            if (info.SubscriptionArn) {
-               return self._serverless.cli.log('Function ' + info.FunctionArn + ' is already subscribed to ' + info.TopicArn);
-            }
+            var params;
 
-            return Q.ninvoke(sns, 'subscribe', { TopicArn: info.TopicArn, Protocol: 'lambda', Endpoint: info.FunctionArn })
+            if (info.SubscriptionArn) {
+               self._serverless.cli.log('Function ' + info.FunctionArn + ' is already subscribed to ' + info.TopicArn);
+               return;
+            }
+            params = {
+               TopicArn: info.TopicArn,
+               Protocol: 'lambda',
+               Endpoint: info.FunctionArn,
+            };
+            return self.provider.request('SNS', 'subscribe', params, self._opts.stage, self._opts.region)
                .then(function() {
-                  return self._serverless.cli.log('Function ' + info.FunctionArn + ' is now subscribed to ' + info.TopicArn);
+                  self._serverless.cli.log('Function ' + info.FunctionArn + ' is now subscribed to ' + info.TopicArn);
+                  return;
                });
          });
    },
 
    unsubscribeFunction: function(fnName, fnDef, topicName) {
-      var self = this,
-          sns = new AWS.SNS();
+      var self = this;
 
       this._serverless.cli.log('Need to unsubscribe ' + fnDef.name + ' from ' + topicName);
 
-      return this._getSubscriptionInfo(fnName, fnDef, topicName)
+      return this._getSubscriptionInfo(fnDef, topicName)
          .then(function(info) {
+            var params = { SubscriptionArn: info.SubscriptionArn };
+
             if (!info.SubscriptionArn) {
-               return self._serverless.cli.log('Function ' + info.FunctionArn + ' is not subscribed to ' + info.TopicArn);
+               self._serverless.cli.log('Function ' + info.FunctionArn + ' is not subscribed to ' + info.TopicArn);
+               return;
             }
 
-            return Q.ninvoke(sns, 'unsubscribe', { SubscriptionArn: info.SubscriptionArn })
+            return self.provider.request('SNS', 'unsubscribe', params, self._opts.stage, self._opts.region)
                .then(function() {
-                  return self._serverless.cli.log(
+                  self._serverless.cli.log(
                      'Function ' + info.FunctionArn + ' is no longer subscribed to ' + info.TopicArn +
                      ' (deleted ' + info.SubscriptionArn + ')'
                   );
+                  return;
                });
          });
    },
 
-   _getSubscriptionInfo: function(fnName, fnDef, topicName) {
+   _getSubscriptionInfo: function(fnDef, topicName) {
       var self = this,
-          sns = new AWS.SNS(),
-          lambda = new AWS.Lambda(),
-          fnArn, acctID, region, topicArn;
+          fnArn, acctID, region, topicArn, params;
 
-      return Q.ninvoke(lambda, 'getFunction', { FunctionName: fnDef.name })
+      params = { FunctionName: fnDef.name };
+
+      return this.provider.request('Lambda', 'getFunction', params, this._opts.stage, this._opts.region)
          .then(function(fn) {
             fnArn = fn.Configuration.FunctionArn;
             // NOTE: assumes that the topic is in the same account and region at this point
@@ -125,7 +138,9 @@ module.exports = Class.extend({
             self._serverless.cli.log('Topic ARN: ' + topicArn);
 
             // NOTE: does not support NextToken and paginating through subscriptions at this point
-            return Q.ninvoke(sns, 'listSubscriptionsByTopic', { TopicArn: topicArn });
+            return self.provider.request('SNS', 'listSubscriptionsByTopic',
+               { TopicArn: topicArn }, self._opts.stage, self._opts.region
+            );
          })
          .then(function(resp) {
             var existing = _.findWhere(resp.Subscriptions, { Protocol: 'lambda', Endpoint: fnArn }) || {};
