@@ -41,13 +41,8 @@ functions:
 By doing that, the `deploy` and `remove` commands in SLS will now subscribe and
 unsubscribe your function to or from the specified topic. If you would like to
 subscribe or unsubscribe the functions manually (outside of a deploy or remove
-command), you can use `sls subscribeExternalSNS` or
-`sls unsubscribeExternalSNS`.
-
-**NOTE:** This plugin requires the AWS SDK (`require('aws-sdk')`), but does not
-list it as a dependency. This allows you to provide the dependency your own
-way, making sure not to bundle the SDK and all its dependencies with your
-function code.
+command), you can use `serverless subscribeExternalSNS` or
+`serverless unsubscribeExternalSNS`.
 
 
 ## How do I contribute?
