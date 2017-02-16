@@ -47,7 +47,15 @@ module.exports = Class.extend({
           normalizedTopicName = this._normalizeTopicName(topicName),
           fnRef = normalizedFnName + 'LambdaFunction',
           permRef = normalizedFnName + 'LambdaPermission' + normalizedTopicName,
-          permission;
+          permission,
+          tmpTopicName;
+
+      // NOTE: If topicName is full ARN extract last part of ARN to use for permRef
+      if (topicName.substr(0, 7) === 'arn:aws') {
+         tmpTopicName = _.last(topicName.split(':'));
+         normalizedTopicName = this._normalizeTopicName(tmpTopicName);
+         permRef = normalizedFnName + 'LambdaPermission' + normalizedTopicName;
+      }
 
       permission = {
          Type: 'AWS::Lambda::Permission',
@@ -58,6 +66,10 @@ module.exports = Class.extend({
             SourceArn: { 'Fn::Join': [ ':', [ 'arn:aws:sns', { 'Ref': 'AWS::Region' }, { 'Ref': 'AWS::AccountId' }, topicName ] ] }
          },
       };
+
+      if (topicName.substr(0, 7) === 'arn:aws') {
+         permission.Properties.SourceArn = topicName;
+      }
 
       this._serverless.service.provider.compiledCloudFormationTemplate.Resources[permRef] = permission;
    },
@@ -129,10 +141,16 @@ module.exports = Class.extend({
       return this.provider.request('Lambda', 'getFunction', params, this._opts.stage, this._opts.region)
          .then(function(fn) {
             fnArn = fn.Configuration.FunctionArn;
-            // NOTE: assumes that the topic is in the same account and region at this point
-            region = fnArn.split(':')[3];
-            acctID = fnArn.split(':')[4];
-            topicArn = 'arn:aws:sns:' + region + ':' + acctID + ':' + topicName;
+
+            // NOTE: if the Topic is a fully qualified AWS resource, use it rather than build from function account/region.
+            if (topicName.substr(0, 7) === 'arn:aws') {
+               topicArn = topicName;
+            } else {
+               // NOTE: assumes that the topic is in the same account and region at this point
+               region = fnArn.split(':')[3];
+               acctID = fnArn.split(':')[4];
+               topicArn = 'arn:aws:sns:' + region + ':' + acctID + ':' + topicName;
+            }
 
             self._serverless.cli.log('Function ARN: ' + fnArn);
             self._serverless.cli.log('Topic ARN: ' + topicArn);
