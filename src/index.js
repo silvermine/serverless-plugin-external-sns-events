@@ -138,8 +138,12 @@ module.exports = Class.extend({
             self._serverless.cli.log('Topic ARN: ' + topicArn);
 
             // NOTE: does not support NextToken and paginating through subscriptions at this point
-            return self.provider.request('SNS', 'listSubscriptionsByTopic',
-               { TopicArn: topicArn }, self._opts.stage, self._opts.region
+            return self.provider.request(
+               'SNS',
+               'listSubscriptionsByTopic',
+               { TopicArn: topicArn },
+               self._opts.stage,
+               self._opts.region
             );
          })
          .then(function(resp) {
