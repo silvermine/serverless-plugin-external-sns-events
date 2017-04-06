@@ -55,7 +55,7 @@ module.exports = Class.extend({
             FunctionName: { 'Fn::GetAtt': [ fnRef, 'Arn' ] },
             Action: 'lambda:InvokeFunction',
             Principal: 'sns.amazonaws.com',
-            SourceArn: { 'Fn::Join': [ ':', [ 'arn:aws:sns', { 'Ref': 'AWS::Region' }, { 'Ref': 'AWS::AccountId' }, topicName ] ] }
+            SourceArn: { 'Fn::Join': [ ':', [ 'arn:aws:sns', { 'Ref': 'AWS::Region' }, { 'Ref': 'AWS::AccountId' }, topicName ] ] },
          },
       };
 

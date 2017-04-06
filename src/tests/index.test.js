@@ -11,7 +11,7 @@ describe('serverless-plugin-external-sns-events', function() {
       var serverless, provider;
 
       provider = {
-         request: requestFunc
+         request: requestFunc,
       };
 
       serverless = {
@@ -25,9 +25,9 @@ describe('serverless-plugin-external-sns-events', function() {
          service: {
             provider: {
                compiledCloudFormationTemplate: {
-                  Resources: {}
-               }
-            }
+                  Resources: {},
+               },
+            },
          },
          cli: { log: function() {
             return;
@@ -84,7 +84,7 @@ describe('serverless-plugin-external-sns-events', function() {
                FunctionName: { 'Fn::GetAtt': [ 'MyFuncLambdaFunction', 'Arn' ] },
                Action: 'lambda:InvokeFunction',
                Principal: 'sns.amazonaws.com',
-               SourceArn: { 'Fn::Join': [ ':', [ 'arn:aws:sns', { 'Ref': 'AWS::Region' }, { 'Ref': 'AWS::AccountId' }, 'cool-Topic' ] ] }
+               SourceArn: { 'Fn::Join': [ ':', [ 'arn:aws:sns', { 'Ref': 'AWS::Region' }, { 'Ref': 'AWS::AccountId' }, 'cool-Topic' ] ] },
             },
          };
 
@@ -116,7 +116,7 @@ describe('serverless-plugin-external-sns-events', function() {
                   { Protocol: 'other', Endpoint: lambdaArn, SubscriptionArn: 'junk' },
                   { Protocol: 'lambda', Endpoint: lambdaArn, SubscriptionArn: subscriptionArn },
                   { Protocol: 'lambda', Endpoint: 'wronglambda', SubscriptionArn: 'junksub' },
-               ]
+               ],
             });
 
          mockServerless = createMockServerless(createMockRequest(requestStub));
@@ -134,7 +134,7 @@ describe('serverless-plugin-external-sns-events', function() {
             expect(result).to.eql({
                FunctionArn: lambdaArn,
                TopicArn: topicArn,
-               SubscriptionArn: subscriptionArn
+               SubscriptionArn: subscriptionArn,
             });
          });
       });
@@ -158,7 +158,7 @@ describe('serverless-plugin-external-sns-events', function() {
                Subscriptions: [
                   { Protocol: 'other', Endpoint: lambdaArn, SubscriptionArn: 'junk' },
                   { Protocol: 'lambda', Endpoint: 'wronglambda', SubscriptionArn: 'junksub' },
-               ]
+               ],
             });
 
          mockServerless = createMockServerless(createMockRequest(requestStub));
@@ -174,7 +174,7 @@ describe('serverless-plugin-external-sns-events', function() {
             expect(result).to.eql({
                FunctionArn: lambdaArn,
                TopicArn: topicArn,
-               SubscriptionArn: undefined
+               SubscriptionArn: undefined,
             });
          });
       });
@@ -252,7 +252,7 @@ describe('serverless-plugin-external-sns-events', function() {
             return Q({
                FunctionArn: 'some-func-arn',
                TopicArn: 'some-topic-arn',
-               SubscriptionArn: undefined
+               SubscriptionArn: undefined,
             });
          });
 
@@ -271,7 +271,7 @@ describe('serverless-plugin-external-sns-events', function() {
             expSub = {
                TopicArn: 'some-topic-arn',
                Protocol: 'lambda',
-               Endpoint: 'some-func-arn'
+               Endpoint: 'some-func-arn',
             };
 
             expect(requestMethod.calledWithExactly('SNS', 'subscribe', expSub, stage, region))
@@ -302,7 +302,7 @@ describe('serverless-plugin-external-sns-events', function() {
             return Q({
                FunctionArn: 'some-func-arn',
                TopicArn: 'some-topic-arn',
-               SubscriptionArn: undefined
+               SubscriptionArn: undefined,
             });
          });
 
@@ -337,7 +337,7 @@ describe('serverless-plugin-external-sns-events', function() {
             return Q({
                FunctionArn: 'some-func-arn',
                TopicArn: 'some-topic-arn',
-               SubscriptionArn: 'some-subscription-arn'
+               SubscriptionArn: 'some-subscription-arn',
             });
          });
 
@@ -354,7 +354,7 @@ describe('serverless-plugin-external-sns-events', function() {
             expect(requestMethod.callCount).to.be(1);
 
             params = {
-               SubscriptionArn: 'some-subscription-arn'
+               SubscriptionArn: 'some-subscription-arn',
             };
 
             expect(requestMethod.calledWithExactly('SNS', 'unsubscribe', params, stage, region))
