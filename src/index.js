@@ -55,7 +55,7 @@ module.exports = Class.extend({
             FunctionName: { 'Fn::GetAtt': [ fnRef, 'Arn' ] },
             Action: 'lambda:InvokeFunction',
             Principal: 'sns.amazonaws.com',
-            SourceArn: { 'Fn::Join': [ ':', [ 'arn:aws:sns', { 'Ref': 'AWS::Region' }, { 'Ref': 'AWS::AccountId' }, topicName ] ] }
+            SourceArn: { 'Fn::Join': [ ':', [ 'arn:aws:sns', { 'Ref': 'AWS::Region' }, { 'Ref': 'AWS::AccountId' }, topicName ] ] },
          },
       };
 
@@ -138,8 +138,12 @@ module.exports = Class.extend({
             self._serverless.cli.log('Topic ARN: ' + topicArn);
 
             // NOTE: does not support NextToken and paginating through subscriptions at this point
-            return self.provider.request('SNS', 'listSubscriptionsByTopic',
-               { TopicArn: topicArn }, self._opts.stage, self._opts.region
+            return self.provider.request(
+               'SNS',
+               'listSubscriptionsByTopic',
+               { TopicArn: topicArn },
+               self._opts.stage,
+               self._opts.region
             );
          })
          .then(function(resp) {
