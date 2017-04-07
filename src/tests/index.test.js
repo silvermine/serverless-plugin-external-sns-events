@@ -91,6 +91,38 @@ describe('serverless-plugin-external-sns-events', function() {
          expect(actualPerm).to.eql(expPerm);
       });
 
+      it('can compile lambda permission with correct FunctionName and SourceArn when topicName is full ARN', function() {
+         var topicName = 'arn:aws:sns:us-west-42:12349:cool-Topic',
+             functionName = 'myFunc',
+             mockServerless = createMockServerless(createMockRequest(sinon.stub())),
+             spyRequestFunc = sinon.spy(mockServerless.getProvider('aws'), 'request'),
+             plugin = new Plugin(mockServerless, {}),
+             expPerm, expResourceName, actualPerm;
+
+         plugin.addEventPermission(functionName, { name: functionName }, topicName);
+
+         expect(spyRequestFunc.callCount).to.be(0);
+         expect(Object.keys(mockServerless.service.provider.compiledCloudFormationTemplate.Resources).length).to.be(1);
+
+         expResourceName = 'MyFuncLambdaPermissionCoolTopic';
+
+         expect(expResourceName in mockServerless.service.provider.compiledCloudFormationTemplate.Resources).to.be(true);
+
+         actualPerm = mockServerless.service.provider.compiledCloudFormationTemplate.Resources[expResourceName];
+
+         expPerm = {
+            Type: 'AWS::Lambda::Permission',
+            Properties: {
+               FunctionName: { 'Fn::GetAtt': [ 'MyFuncLambdaFunction', 'Arn' ] },
+               Action: 'lambda:InvokeFunction',
+               Principal: 'sns.amazonaws.com',
+               SourceArn: 'arn:aws:sns:us-west-42:12349:cool-Topic'
+            },
+         };
+
+         expect(actualPerm).to.eql(expPerm);
+      });
+
    });
 
    describe('_getSubscriptionInfo', function() {
@@ -179,6 +211,49 @@ describe('serverless-plugin-external-sns-events', function() {
          });
       });
 
+      it('can return SNS Subscription info when topicName is full ARN', function() {
+         var account = '12349',
+             functionName = 'myFunc',
+             stage = 'test1',
+             region = 'us-west-42',
+             subscriptionArn = 'arn:aws:sns:correct',
+             lambdaArn = 'arn:aws:lambda:' + region + ':' + account + ':function:' + functionName,
+             topicName = 'arn:aws:sns:' + region + ':' + account + ':cooltopic',
+             topicArn = 'arn:aws:sns:' + region + ':' + account + ':cooltopic',
+             requestStub = sinon.stub(),
+             mockServerless, requestMethod, actual, plugin;
+
+         requestStub.withArgs('Lambda', 'getFunction', { FunctionName: functionName }, stage, region)
+            .returns({ Configuration: { FunctionArn: lambdaArn } });
+
+         requestStub.withArgs('SNS', 'listSubscriptionsByTopic', { TopicArn: topicArn }, stage, region)
+            .returns({
+               Subscriptions: [
+                    { Protocol: 'other', Endpoint: lambdaArn, SubscriptionArn: 'junk' },
+                    { Protocol: 'lambda', Endpoint: lambdaArn, SubscriptionArn: subscriptionArn },
+                    { Protocol: 'lambda', Endpoint: 'wronglambda', SubscriptionArn: 'junksub' },
+               ]
+            });
+
+         mockServerless = createMockServerless(createMockRequest(requestStub));
+
+         requestMethod = sinon.spy(mockServerless.getProvider('aws'), 'request');
+
+         plugin = new Plugin(mockServerless, { stage: stage, region: region });
+
+         actual = plugin._getSubscriptionInfo({ name: functionName }, topicName);
+
+         expect(isPromise(actual)).to.be(true);
+
+         return actual.then(function(result) {
+            expect(requestMethod.callCount).to.be(2);
+            expect(result).to.eql({
+               FunctionArn: lambdaArn,
+               TopicArn: topicArn,
+               SubscriptionArn: subscriptionArn
+            });
+         });
+      });
    });
 
    describe('subscribeFunction', function() {
