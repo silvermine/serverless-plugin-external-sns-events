@@ -43,10 +43,8 @@ module.exports = Class.extend({
    },
 
    addEventPermission: function(fnName, fnDef, topicName) {
-      var normalizedFnName = this._normalize(fnName),
-          normalizedTopicName = this._normalizeTopicName(topicName),
-          fnRef = normalizedFnName + 'LambdaFunction',
-          permRef = normalizedFnName + 'LambdaPermission' + normalizedTopicName,
+      var fnRef = this.provider.naming.getLambdaLogicalId(fnName),
+          permRef = this.provider.naming.getLambdaSnsPermissionLogicalId(fnName, topicName),
           permission;
 
       permission = {
@@ -155,18 +153,6 @@ module.exports = Class.extend({
                SubscriptionArn: existing.SubscriptionArn,
             };
          });
-   },
-
-   _normalize: function(s) {
-      if (_.isEmpty(s)) {
-         return;
-      }
-
-      return s[0].toUpperCase() + s.substr(1);
-   },
-
-   _normalizeTopicName: function(arn) {
-      return this._normalize(arn.replace(/[^0-9A-Za-z]/g, ''));
    },
 
 });
