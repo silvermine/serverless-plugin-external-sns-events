@@ -7,11 +7,12 @@ var expect = require('expect.js'),
 
 describe('serverless-plugin-external-sns-events', function() {
 
-   function createMockServerless(requestFunc) {
+   function createMockServerless(requestFunc, namingObj) {
       var serverless, provider;
 
       provider = {
          request: requestFunc,
+         naming: namingObj || {},
       };
 
       serverless = {
@@ -60,19 +61,22 @@ describe('serverless-plugin-external-sns-events', function() {
    describe('addEventPermission', function() {
 
       it('can compile lambda permission with correct FunctionName and SourceArn', function() {
-         var topicName = 'cool-Topic',
+         var expFunctionName = 'MyFuncLambdaFunction',
+             expResourceName = 'MyFuncLambdaPermissionCoolTopic',
+             getLambdaLogicalIdSpy = sinon.stub().returns(expFunctionName),
+             getLambdaSnsPermissionLogicalIdSpy = sinon.stub().returns(expResourceName),
+             topicName = 'cool-Topic',
              functionName = 'myFunc',
-             mockServerless = createMockServerless(createMockRequest(sinon.stub())),
+             naming = { getLambdaLogicalId: getLambdaLogicalIdSpy, getLambdaSnsPermissionLogicalId: getLambdaSnsPermissionLogicalIdSpy },
+             mockServerless = createMockServerless(createMockRequest(sinon.stub()), naming),
              spyRequestFunc = sinon.spy(mockServerless.getProvider('aws'), 'request'),
              plugin = new Plugin(mockServerless, {}),
-             expPerm, expResourceName, actualPerm;
+             expPerm, actualPerm;
 
          plugin.addEventPermission(functionName, { name: functionName }, topicName);
 
          expect(spyRequestFunc.callCount).to.be(0);
          expect(Object.keys(mockServerless.service.provider.compiledCloudFormationTemplate.Resources).length).to.be(1);
-
-         expResourceName = 'MyFuncLambdaPermissionCoolTopic';
 
          expect(expResourceName in mockServerless.service.provider.compiledCloudFormationTemplate.Resources).to.be(true);
 
@@ -81,7 +85,7 @@ describe('serverless-plugin-external-sns-events', function() {
          expPerm = {
             Type: 'AWS::Lambda::Permission',
             Properties: {
-               FunctionName: { 'Fn::GetAtt': [ 'MyFuncLambdaFunction', 'Arn' ] },
+               FunctionName: { 'Fn::GetAtt': [ expFunctionName, 'Arn' ] },
                Action: 'lambda:InvokeFunction',
                Principal: 'sns.amazonaws.com',
                SourceArn: { 'Fn::Join': [ ':', [ 'arn:aws:sns', { 'Ref': 'AWS::Region' }, { 'Ref': 'AWS::AccountId' }, 'cool-Topic' ] ] },
@@ -361,38 +365,6 @@ describe('serverless-plugin-external-sns-events', function() {
                .to
                .be(true);
          });
-      });
-
-   });
-
-   describe('_normalize', function() {
-      var plugin = new Plugin();
-
-      it('returns undefined for empty strings', function() {
-         expect(plugin._normalize('')).to.be(undefined);
-         expect(plugin._normalize(false)).to.be(undefined);
-         expect(plugin._normalize()).to.be(undefined);
-         expect(plugin._normalize('', true)).to.be(undefined);
-         expect(plugin._normalize(false, true)).to.be(undefined);
-         expect(plugin._normalize(undefined, true)).to.be(undefined);
-      });
-
-      it('only modifies the first letter', function() {
-         expect(plugin._normalize('someTHING')).to.eql('SomeTHING');
-         expect(plugin._normalize('SomeTHING')).to.eql('SomeTHING');
-         expect(plugin._normalize('s')).to.eql('S');
-         expect(plugin._normalize('S')).to.eql('S');
-      });
-
-   });
-
-
-   describe('_normalizeTopicName', function() {
-      var plugin = new Plugin();
-
-      it('produces expected output for a string', function() {
-         expect(plugin._normalizeTopicName('foo-topic')).to
-            .eql('Footopic');
       });
 
    });
