@@ -1,9 +1,9 @@
 # Serverless Plugin: External SNS Events
 
-[![Build Status](https://travis-ci.org/silvermine/serverless-plugin-external-sns-events.png?branch=master)](https://travis-ci.org/silvermine/serverless-plugin-external-sns-events)
+[![Build Status](https://travis-ci.org/silvermine/serverless-plugin-external-sns-events.svg?branch=master)](https://travis-ci.org/silvermine/serverless-plugin-external-sns-events)
 [![Coverage Status](https://coveralls.io/repos/github/silvermine/serverless-plugin-external-sns-events/badge.svg?branch=master)](https://coveralls.io/github/silvermine/serverless-plugin-external-sns-events?branch=master)
-[![Dependency Status](https://david-dm.org/silvermine/serverless-plugin-external-sns-events.png)](https://david-dm.org/silvermine/serverless-plugin-external-sns-events)
-[![Dev Dependency Status](https://david-dm.org/silvermine/serverless-plugin-external-sns-events/dev-status.png)](https://david-dm.org/silvermine/serverless-plugin-external-sns-events#info=devDependencies&view=table)
+[![Dependency Status](https://david-dm.org/silvermine/serverless-plugin-external-sns-events.svg)](https://david-dm.org/silvermine/serverless-plugin-external-sns-events)
+[![Dev Dependency Status](https://david-dm.org/silvermine/serverless-plugin-external-sns-events/dev-status.svg)](https://david-dm.org/silvermine/serverless-plugin-external-sns-events#info=devDependencies&view=table)
 
 
 ## What is it?
