@@ -1,5 +1,5 @@
 {
-  "name": "serverless-plugin-external-sns-events",
+  "name": "@silvermine/serverless-plugin-external-sns-events",
   "version": "1.1.0",
   "description": "Plugin for the SLS 1.x branch to provide better support for SNS events to your Lambda functions",
   "main": "src/index.js",
@@ -28,16 +28,16 @@
     "underscore": "1.8.3"
   },
   "devDependencies": {
-    "coveralls": "2.11.12",
-    "eslint": "3.3.1",
-    "eslint-config-silvermine": "1.1.2",
+    "@silvermine/eslint-config": "1.5.0",
+    "coveralls": "3.0.2",
+    "eslint": "4.18.1",
     "expect.js": "0.3.1",
-    "grunt": "1.0.1",
-    "grunt-eslint": "19.0.0",
-    "istanbul": "0.4.4",
-    "mocha": "3.0.2",
+    "grunt": "1.0.3",
+    "grunt-eslint": "20.1.0",
+    "istanbul": "0.4.5",
+    "mocha": "5.2.0",
     "mocha-lcov-reporter": "1.2.0",
-    "sinon": "1.17.5",
-    "q": "1.4.1"
+    "q": "1.4.1",
+    "sinon": "1.17.5"
   }
 }
