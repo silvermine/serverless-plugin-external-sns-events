@@ -1,5 +1,5 @@
 {
-  "name": "serverless-plugin-external-sns-events",
+  "name": "@silvermine/serverless-plugin-external-sns-events",
   "version": "1.1.0",
   "description": "Plugin for the SLS 1.x branch to provide better support for SNS events to your Lambda functions",
   "main": "src/index.js",
