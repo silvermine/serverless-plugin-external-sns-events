@@ -127,7 +127,8 @@ module.exports = Class.extend({
       return this.provider.request('Lambda', 'getFunction', params, this._opts.stage, this._opts.region)
          .then(function(fn) {
             fnArn = fn.Configuration.FunctionArn;
-            // NOTE: assumes that the topic is in the same account and region at this point
+            // NOTE: assumes that the topic is in the same account and region at this
+            // point
             region = fnArn.split(':')[3];
             acctID = fnArn.split(':')[4];
             topicArn = 'arn:aws:sns:' + region + ':' + acctID + ':' + topicName;
@@ -135,7 +136,8 @@ module.exports = Class.extend({
             self._serverless.cli.log('Function ARN: ' + fnArn);
             self._serverless.cli.log('Topic ARN: ' + topicArn);
 
-            // NOTE: does not support NextToken and paginating through subscriptions at this point
+            // NOTE: does not support NextToken and paginating through subscriptions at
+            // this point
             return self.provider.request(
                'SNS',
                'listSubscriptionsByTopic',
