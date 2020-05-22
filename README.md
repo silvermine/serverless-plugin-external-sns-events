@@ -29,7 +29,7 @@ NOTE: at this time, it is assumed that the topic is in the same account and
 region as the Lambda function itself. That can be changed in the future if
 needed - feel free to open an issue, and preferably submit a pull request.
 
-```
+```yaml
 functions:
    doSomething:
       name: ${self:service}-${self:provider.stage}-doSomething
