@@ -88,7 +88,7 @@ describe('serverless-plugin-external-sns-events', function() {
                FunctionName: { 'Fn::GetAtt': [ expFunctionName, 'Arn' ] },
                Action: 'lambda:InvokeFunction',
                Principal: 'sns.amazonaws.com',
-               SourceArn: { 'Fn::Join': [ ':', [ 'arn:', { 'Ref': 'AWS::Partition' },':sns', { 'Ref': 'AWS::Region' }, { 'Ref': 'AWS::AccountId' }, 'cool-Topic' ] ] },
+               SourceArn: { 'Fn::Join': [ ':', [ 'arn', { 'Ref': 'AWS::Partition' },'sns', { 'Ref': 'AWS::Region' }, { 'Ref': 'AWS::AccountId' }, 'cool-Topic' ] ] },
             },
          };
 
