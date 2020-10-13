@@ -132,7 +132,7 @@ module.exports = Class.extend({
             let partition = fnArn.split(':')[1];
             region = fnArn.split(':')[3];
             acctID = fnArn.split(':')[4];
-            topicArn = 'arn' + partition + 'sns:' + region + ':' + acctID + ':' + topicName;
+            topicArn = 'arn:' + partition + ':sns:' + region + ':' + acctID + ':' + topicName;
 
             self._serverless.cli.log('Function ARN: ' + fnArn);
             self._serverless.cli.log('Topic ARN: ' + topicArn);
