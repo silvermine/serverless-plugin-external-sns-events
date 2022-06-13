@@ -33,6 +33,9 @@ describe('serverless-plugin-external-sns-events', function() {
          cli: { log: function() {
             return;
          } },
+         configSchemaHandler: {
+            defineFunctionEvent: function() {},
+         },
       };
       return serverless;
    }

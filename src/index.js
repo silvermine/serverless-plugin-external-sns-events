@@ -28,6 +28,8 @@ module.exports = Class.extend({
             lifecycleEvents: [ 'unsubscribe' ],
          },
       };
+
+      this._serverless.configSchemaHandler.defineFunctionEvent('aws', 'externalSNS', { type: 'string' });
    },
 
    _loopEvents: function(fn) {
