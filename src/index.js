@@ -11,7 +11,7 @@ module.exports = Class.extend({
       this.provider = serverless ? serverless.getProvider('aws') : null;
 
       this.hooks = {
-         'deploy:compileEvents': this._loopEvents.bind(this, this.addEventPermission),
+         'package:compileEvents': this._loopEvents.bind(this, this.addEventPermission),
          'deploy:deploy': this._loopEvents.bind(this, this.subscribeFunction),
          'before:remove:remove': this._loopEvents.bind(this, this.unsubscribeFunction),
          'subscribeExternalSNS:subscribe': this._loopEvents.bind(this, this.subscribeFunction),
