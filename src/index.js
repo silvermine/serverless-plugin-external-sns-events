@@ -32,6 +32,14 @@ module.exports = Class.extend({
       this._serverless.configSchemaHandler.defineFunctionEvent('aws', 'externalSNS', { type: 'string' });
    },
 
+   _topicName(topicArn) {
+      return topicArn.split(':')[5];
+   },
+
+   _topicRegion(topicArn) {
+      return topicArn.split(':')[3];
+   },
+
    _loopEvents: function(fn) {
       var self = this;
 
@@ -44,9 +52,9 @@ module.exports = Class.extend({
       });
    },
 
-   addEventPermission: function(fnName, fnDef, topicName) {
+   addEventPermission: function(fnName, fnDef, topicArn) {
       var fnRef = this.provider.naming.getLambdaLogicalId(fnName),
-          permRef = this.provider.naming.getLambdaSnsPermissionLogicalId(fnName, topicName),
+          permRef = this.provider.naming.getLambdaSnsPermissionLogicalId(fnName, this._topicName(topicArn)),
           permission;
 
       permission = {
@@ -55,26 +63,26 @@ module.exports = Class.extend({
             FunctionName: { 'Fn::GetAtt': [ fnRef, 'Arn' ] },
             Action: 'lambda:InvokeFunction',
             Principal: 'sns.amazonaws.com',
-            SourceArn: { 'Fn::Join': [ ':', [ 'arn:aws:sns', { 'Ref': 'AWS::Region' }, { 'Ref': 'AWS::AccountId' }, topicName ] ] },
+            SourceArn: topicArn,
          },
       };
 
       this._serverless.service.provider.compiledCloudFormationTemplate.Resources[permRef] = permission;
    },
 
-   subscribeFunction: function(fnName, fnDef, topicName) {
+   subscribeFunction: function(fnName, fnDef, topicArn) {
       var self = this;
 
       if (this._opts.noDeploy) {
          this._serverless.cli.log(
-            'Not subscribing ' + fnDef.name + ' to ' + topicName + ' because of the noDeploy flag'
+            'Not subscribing ' + fnDef.name + ' to ' + topicArn + ' because of the noDeploy flag'
          );
          return;
       }
 
-      this._serverless.cli.log('Need to subscribe ' + fnDef.name + ' to ' + topicName);
+      this._serverless.cli.log('Need to subscribe ' + fnDef.name + ' to ' + topicArn);
 
-      return this._getSubscriptionInfo(fnDef, topicName)
+      return this._getSubscriptionInfo(fnDef, topicArn)
          .then(function(info) {
             var params;
 
@@ -87,7 +95,8 @@ module.exports = Class.extend({
                Protocol: 'lambda',
                Endpoint: info.FunctionArn,
             };
-            return self.provider.request('SNS', 'subscribe', params, self._opts.stage, self._opts.region)
+
+            return self.provider.request('SNS', 'subscribe', params, { region: self._topicRegion(info.TopicArn), stage: self._opts.stage })
                .then(function() {
                   self._serverless.cli.log('Function ' + info.FunctionArn + ' is now subscribed to ' + info.TopicArn);
                   return;
@@ -95,12 +104,12 @@ module.exports = Class.extend({
          });
    },
 
-   unsubscribeFunction: function(fnName, fnDef, topicName) {
+   unsubscribeFunction: function(fnName, fnDef, topicArn) {
       var self = this;
 
-      this._serverless.cli.log('Need to unsubscribe ' + fnDef.name + ' from ' + topicName);
+      this._serverless.cli.log('Need to unsubscribe ' + fnDef.name + ' from ' + topicArn);
 
-      return this._getSubscriptionInfo(fnDef, topicName)
+      return this._getSubscriptionInfo(fnDef, topicArn)
          .then(function(info) {
             var params = { SubscriptionArn: info.SubscriptionArn };
 
@@ -120,43 +129,30 @@ module.exports = Class.extend({
          });
    },
 
-   _getSubscriptionInfo: function(fnDef, topicName) {
+   _getSubscriptionInfo: function(fnDef, topicArn) {
       var self = this,
-          fnArn, acctID, region, topicArn, params;
+          params = { FunctionName: fnDef.name },
+          opts = { stage: self._opts.stage, region: self._opts.region };
 
-      params = { FunctionName: fnDef.name };
+      // NOTE: does not support NextToken and paginating through subscriptions at
+      // this point
+      return self.provider.request('SNS', 'listSubscriptions', {}, { region: self._topicRegion(topicArn) })
+         .then(function(subscriptions) {
+            return self.provider.request('Lambda', 'getFunction', params, opts)
+               .then(function(fn) {
+                  var fnArn = fn.Configuration.FunctionArn,
+                      existing;
 
-      return this.provider.request('Lambda', 'getFunction', params, this._opts.stage, this._opts.region)
-         .then(function(fn) {
-            fnArn = fn.Configuration.FunctionArn;
-            // NOTE: assumes that the topic is in the same account and region at this
-            // point
-            region = fnArn.split(':')[3];
-            acctID = fnArn.split(':')[4];
-            topicArn = 'arn:aws:sns:' + region + ':' + acctID + ':' + topicName;
+                  self._serverless.cli.log('Function ARN: ' + fnArn);
+                  self._serverless.cli.log('Topic ARN: ' + topicArn);
 
-            self._serverless.cli.log('Function ARN: ' + fnArn);
-            self._serverless.cli.log('Topic ARN: ' + topicArn);
-
-            // NOTE: does not support NextToken and paginating through subscriptions at
-            // this point
-            return self.provider.request(
-               'SNS',
-               'listSubscriptionsByTopic',
-               { TopicArn: topicArn },
-               self._opts.stage,
-               self._opts.region
-            );
-         })
-         .then(function(resp) {
-            var existing = _.findWhere(resp.Subscriptions, { Protocol: 'lambda', Endpoint: fnArn }) || {};
-
-            return {
-               FunctionArn: fnArn,
-               TopicArn: topicArn,
-               SubscriptionArn: existing.SubscriptionArn,
-            };
+                  existing = _.findWhere(subscriptions.Subscriptions, { Protocol: 'lambda', Endpoint: fnArn, TopicArn: topicArn }) || {};
+                  return {
+                     FunctionArn: fnArn,
+                     TopicArn: topicArn,
+                     SubscriptionArn: existing.SubscriptionArn,
+                  };
+               });
          });
    },
-
 });
