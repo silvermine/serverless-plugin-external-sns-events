@@ -5,7 +5,7 @@
   "main": "src/index.js",
   "scripts": {
     "commitlint": "commitlint --from 368ff8f",
-    "test": "check-node-version --npm 8.5.5 && nyc mocha -- 'src/tests/**/*.test.js'",
+    "test": "check-node-version --npm 10.5.0 && nyc mocha -- 'src/tests/**/*.test.js'",
     "markdownlint": "markdownlint -c .markdownlint.json -i CHANGELOG.md '{,!(node_modules)/**/}*.md'",
     "eslint": "eslint '{,!(node_modules|dist)/**/}*.js'",
     "standards": "npm run markdownlint && npm run eslint",
