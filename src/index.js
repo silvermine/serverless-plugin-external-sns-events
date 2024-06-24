@@ -55,7 +55,19 @@ module.exports = Class.extend({
             FunctionName: { 'Fn::GetAtt': [ fnRef, 'Arn' ] },
             Action: 'lambda:InvokeFunction',
             Principal: 'sns.amazonaws.com',
-            SourceArn: { 'Fn::Join': [ ':', [ 'arn:aws:sns', { 'Ref': 'AWS::Region' }, { 'Ref': 'AWS::AccountId' }, topicName ] ] },
+            SourceArn: {
+               'Fn::Join': [
+                  ':',
+                  [
+                     'arn',
+                     { 'Ref': 'AWS::Partition' },
+                     'sns',
+                     { 'Ref': 'AWS::Region' },
+                     { 'Ref': 'AWS::AccountId' },
+                     topicName,
+                  ],
+               ],
+            },
          },
       };
 
@@ -122,7 +134,7 @@ module.exports = Class.extend({
 
    _getSubscriptionInfo: function(fnDef, topicName) {
       var self = this,
-          fnArn, acctID, region, topicArn, params;
+          fnArn, acctID, partition, region, topicArn, params;
 
       params = { FunctionName: fnDef.name };
 
@@ -131,9 +143,10 @@ module.exports = Class.extend({
             fnArn = fn.Configuration.FunctionArn;
             // NOTE: assumes that the topic is in the same account and region at this
             // point
+            partition = fnArn.split(':')[1];
             region = fnArn.split(':')[3];
             acctID = fnArn.split(':')[4];
-            topicArn = 'arn:aws:sns:' + region + ':' + acctID + ':' + topicName;
+            topicArn = 'arn:' + partition + ':sns:' + region + ':' + acctID + ':' + topicName;
 
             self._serverless.cli.log('Function ARN: ' + fnArn);
             self._serverless.cli.log('Topic ARN: ' + topicArn);
